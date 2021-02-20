@@ -51,9 +51,15 @@ class ViewController: UIViewController {
     }
     
     private func startFaceTracking() {
+        // we use the ARKit version if available
+        // or fallback to AVFoundation
         let tracker:FaceTracker = FaceTrackerAR.isAvailable() ? FaceTrackerAR() : FaceTrackerAV()
+        // I found out the tracker needs to be a VC added as a child
+        // in order to receive updates from ARKit/AVFoundation
         addChild(tracker)
         tracker.start()
+        // I use debouce to wait a second before pausing/resuming
+        // the video once the face tracking changes
         cancellable = tracker.trackingStatus
             .debounce(for: 1.0,
                           scheduler: RunLoop.main)

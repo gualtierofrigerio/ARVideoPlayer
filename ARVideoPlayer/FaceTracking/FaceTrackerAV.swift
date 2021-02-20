@@ -9,6 +9,7 @@ import AVFoundation
 import Combine
 import UIKit
 
+/// AVFoundation implementation of FaceTracker
 class FaceTrackerAV: UIViewController {
     var trackingStatus: AnyPublisher<FaceTrackingStatus, Never> {
         $status.eraseToAnyPublisher()
@@ -27,7 +28,7 @@ class FaceTrackerAV: UIViewController {
         if captureSession != nil {
             return
         }
-        let objectTypes:[AVMetadataObject.ObjectType] = [.face]
+        
         let session = AVCaptureSession()
         let deviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes:[.builtInWideAngleCamera],
                                                                       mediaType: AVMediaType.video,
@@ -39,6 +40,8 @@ class FaceTrackerAV: UIViewController {
             else { return }
         session.addInput(videoDeviceInput)
         
+        // we're only interested in .face for our recognition
+        let objectTypes:[AVMetadataObject.ObjectType] = [.face]
         let metadataOutput = AVCaptureMetadataOutput()
         session.addOutput(metadataOutput)
         metadataOutput.setMetadataObjectsDelegate(self, queue: queue)
@@ -70,7 +73,10 @@ extension FaceTrackerAV:AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureM
     func metadataOutput(_ output: AVCaptureMetadataOutput,
                                didOutput metadataObjects: [AVMetadataObject],
                                from connection: AVCaptureConnection) {
+        // a face is detected if at least one metadataObject is of type .face
         let isFaceDetected = metadataObjects.contains(where: { $0.type == .face })
+        // I only send updates if the tracking status changed
+        // so I always check isTracking alongsside isFaceDetected
         if isFaceDetected == true && isTracking == false {
             isTracking = true
             status = .faceDetected

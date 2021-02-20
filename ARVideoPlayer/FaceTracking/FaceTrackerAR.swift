@@ -8,7 +8,9 @@
 import ARKit
 import Combine
 
+/// ARKit implementation of FaceTracker
 class FaceTrackerAR: UIViewController {
+    // required by FaceTracker protocol
     var trackingStatus: AnyPublisher<FaceTrackingStatus, Never> {
         $status.eraseToAnyPublisher()
     }
@@ -23,8 +25,9 @@ class FaceTrackerAR: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private var isTracking = false
-    private let session: ARSession
+    private var isTracking = false // tracking status
+    private let session: ARSession // the ARSession to perform face detection
+    // I use a @Published to update status
     @Published private var status:FaceTrackingStatus = .idle
 }
 
@@ -51,6 +54,8 @@ extension FaceTrackerAR: ARSessionDelegate {
     func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
         guard let faceAnchor = anchors.first as? ARFaceAnchor else { return }
         
+        // I only send updates if the tracking status changed
+        // so I always check isTracking alongsside faceAnchor.isTracked
         if faceAnchor.isTracked == true && isTracking == false {
             isTracking = true
             status = .faceDetected
