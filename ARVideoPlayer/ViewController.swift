@@ -34,8 +34,24 @@ class ViewController: UIViewController {
     
     private var cancellable:AnyCancellable?
     
+    private func processBlinkStatus(_ status:BlinkStatus) {
+        playVideo()
+        switch status {
+        case .leftEye:
+            videoPlayer.goBackwards()
+        case .rightEye:
+            videoPlayer.goForward()
+        case .bothEyes:
+            print("both eyes blink")
+        case .none:
+            print("no blink")
+        }
+    }
+    
     private func processTrackingStatus(_ value:FaceTrackingStatus) {
         switch value {
+        case .blink(let status):
+            processBlinkStatus(status)
         case .faceDetected:
             playVideo()
         case .noFaceDetected:
