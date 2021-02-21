@@ -8,6 +8,8 @@
 import ARKit
 import Combine
 
+let blinkThreshold:Float = 0.5
+
 /// ARKit implementation of FaceTracker
 class FaceTrackerAR: UIViewController {
     // required by FaceTracker protocol
@@ -54,14 +56,32 @@ extension FaceTrackerAR: ARSessionDelegate {
     func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
         guard let faceAnchor = anchors.first as? ARFaceAnchor else { return }
         
-        // I only send updates if the tracking status changed
-        // so I always check isTracking alongsside faceAnchor.isTracked
-        if faceAnchor.isTracked == true && isTracking == false {
-            isTracking = true
-            status = .faceDetected
-        } else if faceAnchor.isTracked == false && isTracking == true {
-            isTracking = false
-            status = .noFaceDetected
+        var blinkStatus:BlinkStatus = .none
+        // check blink status
+        // the values are mirrored, .eyeBlinkLeft is referred to the right eye
+        if let leftEyeBlink = faceAnchor.blendShapes[.eyeBlinkLeft] as? Float {
+            if leftEyeBlink > blinkThreshold {
+                blinkStatus = .rightEye
+            }
+        }
+        if let rightEyeBlink = faceAnchor.blendShapes[.eyeBlinkRight] as? Float {
+            if rightEyeBlink > blinkThreshold {
+                blinkStatus = blinkStatus == .rightEye ? .bothEyes : .leftEye
+            }
+        }
+        if blinkStatus != .none {
+            status = .blink(blinkStatus)
+        }
+        else { // not blinking so either we detected a face or not
+            // I only send updates if the tracking status changed
+            // so I always check isTracking alongsside faceAnchor.isTracked
+            if faceAnchor.isTracked == true && isTracking == false {
+                isTracking = true
+                status = .faceDetected
+            } else if faceAnchor.isTracked == false && isTracking == true {
+                isTracking = false
+                status = .noFaceDetected
+            }
         }
     }
         
