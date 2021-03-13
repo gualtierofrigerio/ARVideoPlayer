@@ -55,7 +55,11 @@ class FaceTrackerAV: UIViewController {
 
 extension FaceTrackerAV: FaceTracker {
     static func isAvailable() -> Bool {
-        true // TODO: detect front camera
+        let deviceDiscoverySession = AVCaptureDevice.DiscoverySession(deviceTypes:[.builtInWideAngleCamera],
+                                                                      mediaType: AVMediaType.video,
+                                                                      position: .front)
+        guard let _ = deviceDiscoverySession.devices.first else { return false }
+        return true
     }
     func start() {
         configureCaptureSession()
